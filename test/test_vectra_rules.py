@@ -1,13 +1,13 @@
 import pytest
-import requests
+from urllib3 import disable_warnings, exceptions
 
-requests.packages.urllib3.disable_warnings()
+disable_warnings(exceptions.InsecureRequestWarning)
 
 test_vars = {}
 
-if not pytest.config.getoption('--token'):
+""" if not pytest.config.getoption('--token'):
     pytest.skip('v2 client not configured', allow_module_level=True)
-
+ """
 
 @pytest.fixture()
 def test_host(vc_v2):

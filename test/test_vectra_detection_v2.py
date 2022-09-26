@@ -1,14 +1,12 @@
-import pytest
-import requests
+from urllib3 import disable_warnings, exceptions
 
-requests.packages.urllib3.disable_warnings()
-
-
-if not pytest.config.getoption('--token'):
-    pytest.skip('v1 client not configured', allow_module_level=True)
-
+disable_warnings(exceptions.InsecureRequestWarning)
 
 def test_get_detections_apiv2(vc_v2):
+    ''''
+    Verify the v2 Constructor utilizes the V2 API and it connects
+    Successfully
+    '''
     resp = vc_v2.get_detections()
 
     assert vc_v2.version == 2
@@ -31,6 +29,9 @@ def test_detection_id(vc_v2):
 
 
 def test_detection_tags(vc_v2):
+    '''
+    Verify Tag creation and appending works
+    '''
     detection = vc_v2.get_detections().json()['results'][0]
     detection_id = detection['id']
     detection_tags = detection['tags']
@@ -39,7 +40,9 @@ def test_detection_tags(vc_v2):
     assert vc_v2.get_detection_tags(detection_id=detection_id).json()['tags'] == ['pytest']
 
     vc_v2.set_detection_tags(detection_id=detection_id, tags=['foo', 'bar'], append=True)
-    assert vc_v2.get_detection_tags(detection_id=detection_id).json()['tags'] == ['pytest', 'foo', 'bar']
+    tags = vc_v2.get_detection_tags(detection_id=detection_id).json()['tags']
+    tags.sort()
+    assert tags == ['bar', 'foo', 'pytest']
 
     vc_v2.set_detection_tags(detection_id=detection_id, tags=detection_tags)
     assert vc_v2.get_detection_tags(detection_id=detection_id).json()['tags'] == detection_tags

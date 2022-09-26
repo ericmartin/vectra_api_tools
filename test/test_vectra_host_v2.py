@@ -1,12 +1,11 @@
-import pytest
-import requests
+from urllib3 import disable_warnings, exceptions
 
-requests.packages.urllib3.disable_warnings()
+disable_warnings(exceptions.InsecureRequestWarning)
 
 
-if not pytest.config.getoption('--token'):
+""" if not pytest.config.getoption('--token'):
     pytest.skip('v1 client not configured', allow_module_level=True)
-
+ """
 
 def test_get_hosts(vc_v2):
     resp = vc_v2.get_hosts()
@@ -54,6 +53,9 @@ def test_key_asset(vc_v2):
 
 
 def test_host_tags(vc_v2):
+    '''
+    Verify Tag creation and appending works
+    '''
     host = vc_v2.get_hosts().json()['results'][0]
     host_id = host['id']
     host_tags = host['tags']
@@ -62,8 +64,9 @@ def test_host_tags(vc_v2):
     assert vc_v2.get_host_tags(host_id=host_id).json()['tags'] == ['pytest']
 
     vc_v2.set_host_tags(host_id=host_id, tags=['foo', 'bar'], append=True)
-    assert vc_v2.get_host_tags(host_id=host_id).json()['tags'] == ['pytest', 'foo', 'bar']
+    tags = vc_v2.get_host_tags(host_id=host_id).json()['tags']
+    tags.sort()
+    assert tags == ['bar', 'foo', 'pytest']
 
     vc_v2.set_host_tags(host_id=host_id, tags=host_tags)
     assert vc_v2.get_host_tags(host_id=host_id).json()['tags'] == host_tags
-
