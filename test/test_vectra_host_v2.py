@@ -1,13 +1,15 @@
+'''
+Excercise the APIv2
+'''
 from urllib3 import disable_warnings, exceptions
 
 disable_warnings(exceptions.InsecureRequestWarning)
 
 
-""" if not pytest.config.getoption('--token'):
-    pytest.skip('v1 client not configured', allow_module_level=True)
- """
-
 def test_get_hosts(vc_v2):
+    '''
+    Get hosts via APIv2, should return HTTP/200 OK
+    '''
     resp = vc_v2.get_hosts()
 
     assert vc_v2.version == 2
@@ -22,6 +24,9 @@ def test_get_hosts_note_modified(vc_v2):
 
 
 def test_host_generator(vc_v2):
+    '''
+    Pull a page of data via the generator to test the API
+    '''
     host_gen = vc_v2.get_all_hosts(page_size=1)
     results = next(host_gen)
 
@@ -30,6 +35,9 @@ def test_host_generator(vc_v2):
 
 
 def test_get_hosts_id(vc_v2):
+    '''
+    Verify the Host IDs returned are the same for different methods of access
+    '''
     host_id = vc_v2.get_hosts().json()['results'][0]['id']
     resp = vc_v2.get_host_by_id(host_id=host_id)
 
@@ -37,19 +45,22 @@ def test_get_hosts_id(vc_v2):
 
 
 def test_key_asset(vc_v2):
+    '''
+    Mark hosts as Key Assets and unmark them
+    '''
     host = vc_v2.get_hosts().json()['results'][0]
     host_id = host['id']
-    ka = host['is_key_asset']
+    key_asset = host['is_key_asset']
 
     vc_v2.set_key_asset(host_id=host_id, set=False)
 
     vc_v2.set_key_asset(host_id=host_id, set=True)
-    assert vc_v2.get_host_by_id(host_id=host_id).json()['is_key_asset'] == True
+    assert vc_v2.get_host_by_id(host_id=host_id).json()['is_key_asset'] is True
 
     vc_v2.set_key_asset(host_id=host_id, set=False)
-    assert vc_v2.get_host_by_id(host_id=host_id).json()['is_key_asset'] == False
+    assert vc_v2.get_host_by_id(host_id=host_id).json()['is_key_asset'] is False
 
-    vc_v2.set_key_asset(host_id=host_id, set=ka)
+    vc_v2.set_key_asset(host_id=host_id, set=key_asset)
 
 
 def test_host_tags(vc_v2):

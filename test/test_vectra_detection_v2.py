@@ -1,3 +1,6 @@
+'''
+Test Detections via API v2
+'''
 from urllib3 import disable_warnings, exceptions
 
 disable_warnings(exceptions.InsecureRequestWarning)
@@ -14,6 +17,9 @@ def test_get_detections_apiv2(vc_v2):
 
 
 def test_detection_generator_apiv2(vc_v2):
+    '''
+    Pull a page of data via the generator to test the API
+    '''
     det_gen = vc_v2.get_all_detections(page_size=1)
     results = next(det_gen)
 
@@ -22,6 +28,9 @@ def test_detection_generator_apiv2(vc_v2):
 
 
 def test_detection_id(vc_v2):
+    '''
+    Verify detection IDs returned are the same for different methods of access
+    '''
     det_id = vc_v2.get_detections().json()['results'][0]['id']
     result = vc_v2.get_detection_by_id(detection_id=det_id)
 
@@ -68,5 +77,4 @@ def test_mark_detections_as_fixed(vc_v2):
     assert vc_v2.unmark_detections_fixed(detection_ids=det_ids).status_code == 200
     resp = vc_v2.get_detections()
     assert resp.status_code == 200
-    results = resp.json()['results']
     assert not any([d['state'] == 'fixed' for d in resp.json()['results']])

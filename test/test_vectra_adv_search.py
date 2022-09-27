@@ -1,3 +1,6 @@
+'''
+Excercise the Advanced Search Features
+'''
 from urllib3 import disable_warnings, exceptions
 
 disable_warnings(exceptions.InsecureRequestWarning)
@@ -20,10 +23,15 @@ def test_ip_search(vc_v2):
     '''
     test_ip = vc_v2.get_hosts().json()['results'][-1]['last_source']
     basic_host_id = vc_v2.get_hosts(last_source=test_ip).json()['results'][0]['id']
-    adv_host_gen = vc_v2.advanced_search(stype='hosts', query='host.last_source:{ip}'.format(ip=test_ip))
+    adv_host_gen = vc_v2.advanced_search(
+                            stype='hosts',
+                            query=f'host.last_source:{test_ip}'
+                        )
     adv_host_id = next(adv_host_gen)
-
-    assert adv_host_id.json()['results'][0]['id'] == basic_host_id
+    returned_ids = []
+    for host in adv_host_id.json()['results']:
+        returned_ids.append(host['id'])
+    assert basic_host_id in returned_ids
 
 
 def test_page_size(vc_v2):
@@ -58,7 +66,11 @@ def test_medium_and_critical_detection_count(vc_v2):
     Verify we are reciving the proper counts for Certainty >= 50 (Medium / Critical)
     '''
     basic_count = vc_v2.get_detections(certainty_gte=50).json()['count']
-    adv_gen = vc_v2.advanced_search(stype='detections', page_size=5000, query='detection.certainty:>=50')
+    adv_gen = vc_v2.advanced_search(
+                    stype='detections',
+                    page_size=5000,
+                    query='detection.certainty:>=50'
+                )
     adv_count = next(adv_gen)
 
     # basic search returns triaged detections
