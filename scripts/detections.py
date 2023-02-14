@@ -47,7 +47,7 @@ def main():
                              src_ip=args.get('src_ip', None), state=args.get('state', None),
                              threat_gte=args.get('threat_gte', None))
 
-    print resp.json()
+    print (resp.json())
 
 
 if __name__ == '__main__':

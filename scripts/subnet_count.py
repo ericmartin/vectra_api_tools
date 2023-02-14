@@ -29,7 +29,7 @@ def main():
                         help='return active and inactive hosts (only active hosts by default)')
 
     args = vars(parser.parse_args())
-    print args
+    print (args)
 
     if args['user']:
         args['password'] = getPassword()
@@ -58,9 +58,9 @@ def main():
     # TODO numeric sorting
     if args['csv']:
         for key in sorted(subnets.iterkeys()):
-            print "{key},{count},".format(key=key, count=subnets[key]['count']),
+            print ("{key},{count},".format(key=key, count=subnets[key]['count']))
             if args['list_hosts']:
-                print " ".join(subnets[key]['hosts'])
+                print( " ".join(subnets[key]['hosts']))
             else:
                 print
     else:
@@ -68,7 +68,7 @@ def main():
 
 
 
-    print "\n\n{:<18} {count}".format('total host count:', count=total_count)
+    print ("\n\n{:<18} {count}".format('total host count:', count=total_count))
 
 
 if __name__ == '__main__':

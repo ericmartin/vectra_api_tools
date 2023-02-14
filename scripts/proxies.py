@@ -1,8 +1,9 @@
 import argparse
 import pprint
+import sys
+
 import requests
 import vat.vectra as vectra
-
 from vat.cli import commonArgs
 
 requests.packages.urllib3.disable_warnings()
@@ -27,7 +28,7 @@ def main():
 
     if args['user']:
         print("This script only supports v2 of the API. Please use --token")
-        exit()
+        sys.exit()
     else:
         vc = vectra.VectraClient(url=args['url'], token=args['token'])
 
@@ -41,4 +42,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -1,11 +1,9 @@
-import pytest
-import requests
+'''
+Test Host functions via APIv2
+'''
+from urllib3 import disable_warnings, exceptions
 
-requests.packages.urllib3.disable_warnings()
-
-
-if not pytest.config.getoption('--user'):
-    pytest.skip('v1 client not configured', allow_module_level=True)
+disable_warnings(exceptions.InsecureRequestWarning)
 
 
 def test_get_detections(vc_v1):

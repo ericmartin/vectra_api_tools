@@ -1,3 +1,6 @@
+'''
+Setup Fixtures for Pytest
+'''
 import pytest
 import vat.vectra as vectra
 
@@ -8,6 +11,14 @@ def pytest_addoption(parser):
     parser.addoption('--password', help='password')
     parser.addoption('--token', help='token')
 
+
+@pytest.fixture
+def cmdopt(request):
+    return request.config.getoption('--url')
+
+@pytest.fixture
+def token(request):
+    return request.config.getoption('--token')
 
 @pytest.fixture
 def vc_v1(request):

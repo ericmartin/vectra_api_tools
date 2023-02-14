@@ -119,26 +119,26 @@ def main():
     if args['action'] == 'create':
         feed_id = vc.create_feed(name=args['feed'], category=args['category'], certainty=args['certainty'],
                                  itype=args['type'], duration=args['duration']).json()['threatFeed']['id']
-        print 'Threat feed created\nUploading STIX file\n'
+        print('Threat feed created\nUploading STIX file\n')
         vc.post_stix_file(feed_id=feed_id, stix_file=args['file'])
 
-        print "success"
+        print ("success")
 
     if args['action'] == 'update':
         feed_id = vc.get_feed_by_name(name=args['feed'])
         if feed_id:
             vc.post_stix_file(feed_id=feed_id, stix_file=args['file'])
-            print "success"
+            print ("success")
         else:
-            print 'Could not find threat feed'
+            print ('Could not find threat feed')
 
     if args['action'] == 'delete':
         feed_id = vc.get_feed_by_name(name=args['feed'])
         if feed_id:
             vc.delete_feed(feed_id=feed_id)
-            print "success"
+            print ("success")
         else:
-            print 'Could not find threat feed'
+            print ('Could not find threat feed')
 
     if args['action'] == 'list':
         result = vc.get_feeds()

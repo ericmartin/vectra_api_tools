@@ -70,7 +70,7 @@ def main():
                         tags=args.get('tags', None), last_source=args.get('last_source', None),
                         is_key_asset=args.get('key_asset', None), mac_address=args.get('mac_address', None))
 
-    print resp.json()
+    print (resp.json())
 
 
 if __name__ == '__main__':

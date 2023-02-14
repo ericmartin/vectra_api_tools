@@ -1,12 +1,11 @@
-import pytest
-import requests
+from urllib3 import disable_warnings, exceptions
 
-requests.packages.urllib3.disable_warnings()
+disable_warnings(exceptions.InsecureRequestWarning)
 
 
-if not pytest.config.getoption('--user'):
+""" if not pytest.config.getoption('--user'):
     pytest.skip('v1 client not configured', allow_module_level=True)
-
+ """
 
 def test_get_hosts(vc_v1):
     resp = vc_v1.get_hosts()
@@ -28,4 +27,3 @@ def test_get_hosts_id(vc_v1):
     resp = vc_v1.get_host_by_id(host_id=host_id)
 
     assert resp.json()['id'] == host_id
-
