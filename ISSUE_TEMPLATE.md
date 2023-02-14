@@ -1,8 +1,9 @@
 ### Environment
-Operating system:  
-Python version:  
-VAT version:  
-Vectra version:  
+
+Operating system:
+Python version:
+VAT version:
+Vectra version:
 
 ### Exptected behavior
 
