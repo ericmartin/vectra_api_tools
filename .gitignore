@@ -3,6 +3,7 @@ __pycache__
 .coverage
 .devcontainer
 .env
+htmlcov
 .pytest_cache
 pytest.ini
 .vscode
