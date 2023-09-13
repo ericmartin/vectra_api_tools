@@ -21,18 +21,18 @@ Apache 2
 **Installation**
 pip install from pypi:
 
-```console
+```shell
 pip install vectra_api_tools
 ```
 
 pip install develop branch from github:
 
-```console
+```shell
 pip install git+https://github.com/vectranetworks/vectra_api_tools.git@develop
 ```
 
 source:
 
-```console
+```shell
 python setup.py install
 ```

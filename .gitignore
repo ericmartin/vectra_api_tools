@@ -4,6 +4,8 @@ __pycache__
 .devcontainer
 .env
 htmlcov
+pytest.ini
 .pytest_cache
 pytest.ini
+__pycache__
 .vscode
