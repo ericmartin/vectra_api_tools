@@ -1,6 +1,6 @@
 from setuptools import setup
 
-with open('README.md', 'r') as fh:
+with open('README.md', 'r', encoding='utf-8') as fh:
     long_desc = fh.read()
 
 setup(
@@ -8,10 +8,10 @@ setup(
     description='Vectra API client library',
     long_description=long_desc,
     long_description_content_type='text/markdown',
-    version='3.3',
+    version='3.3rc1',
     author='Vectra',
-    author_email='bwyatt@vectra.ai',
-    url='https://github.com/bswyatt/vectra_api_tools.git',
+    author_email='tme@vectra.ai',
+    url='https://github.com/vectranetworks/vectra_api_tools',
     license='Apache 2.0',
     package_dir={
         'vat': 'modules'
