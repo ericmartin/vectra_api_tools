@@ -4,8 +4,8 @@ Setup testing environment
 import pytest
 import requests
 
-from ..modules import platform
-from ..modules import vectra
+from vat import platform
+from vat import vectra
 
 VectraClient = {
     # Vectra Detect client implementations

@@ -70,12 +70,12 @@ def test_get_feed_by_name_v2(vc, test_skip_v2):
 
 def test_get_feed_by_name_v3(vc, test_skip_v3):
     resp = vc.get_feeds()
-    feed = resp.json()["results"][0]
+    feed = resp.json()['results']
 
     name = feed["name"]
     feed_id = feed["id"]
 
-    assert vc.get_feed_by_name(name=name).json()["results"][0]["id"] == feed_id
+    assert vc.get_feed_by_name(name=name)["id"] == feed_id
 
 
 @pytest.mark.dependency(depends=["test_create_feed"])
