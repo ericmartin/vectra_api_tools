@@ -103,7 +103,7 @@ class VectraPlatformClientV3(VectraClientV2_5):
             str: Access Token
         """
         resp = {}
-        logging.info("Generating access token using refresh token.")
+        self.logger.debug("Generating access token using refresh token.")
         try:
             resp = requests.post(
                 url=f"{self.base_url}/oauth2/token",
@@ -119,28 +119,28 @@ class VectraPlatformClientV3(VectraClientV2_5):
             if resp.status_code == 429:
                 raise TooManyRequestException("Too many requests.")
             resp.raise_for_status()
-            logging.info("Access token is generated using refresh token.")
+            self.logger.debug("Access token is generated using refresh token.")
             self._access = resp.json().get("access_token")
             self._accessTime = int(time.time()) + resp.json().get("expires_in") - 100
         except CustomException as e:
-            logging.error(f"Error occurred: {e}")
+            self.logger.error(f"Error occurred: {e}")
             self._get_token()
             raise CustomException
         except TooManyRequestException as e:
-            logging.info(
+            self.logger.debug(
                 f"{e}. Retrying after {int(resp.headers.get('Retry-After'))} seconds."
             )
             time.sleep(int(resp.headers.get("Retry-After")))
             raise TooManyRequestException from e
         except requests.exceptions.HTTPError:
-            logging.error("Vectra API server is down. Retrying after 10 seconds.")
+            self.logger.error("Vectra API server is down. Retrying after 10 seconds.")
             time.sleep(10)
             raise requests.exceptions.HTTPError
         except requests.exceptions.RequestException as req_exception:
-            logging.error(f"Retrying. An exception occurred: {req_exception}")
+            self.logger.error(f"Retrying. An exception occurred: {req_exception}")
             raise requests.exceptions.RequestException from req_exception
         except Exception as e:
-            logging.error(f"An exception occurred: {e}")
+            self.logger.error(f"An exception occurred: {e}")
 
     @backoff.on_exception(
         backoff.expo,
@@ -162,7 +162,7 @@ class VectraPlatformClientV3(VectraClientV2_5):
         """
         resp = {}
 
-        logging.info("Generating access token.")
+        self.logger.debug("Generating access token.")
         try:
 
             resp = requests.post(
@@ -184,7 +184,7 @@ class VectraPlatformClientV3(VectraClientV2_5):
             if resp.status_code == 429:
                 raise TooManyRequestException("Too many requests.")
             if resp.status_code == 200:
-                logging.info("Access token is generated.")
+                self.logger.debug("Access token is generated.")
                 self._access = resp.json().get("access_token")
                 self._refresh = resp.json().get("refresh_token")
                 self._accessTime = (
@@ -194,20 +194,20 @@ class VectraPlatformClientV3(VectraClientV2_5):
                     int(time.time()) + resp.json().get("refresh_expires_in") - 100
                 )
         except CustomException as e:
-            logging.error(f"Error occurred: {e}")
+            self.logger.error(f"Error occurred: {e}")
         except TooManyRequestException as e:
-            logging.info(
+            self.logger.debug(
                 f"{e}. Retrying after {int(resp.headers.get('Retry-After'))} seconds."
             )
             time.sleep(int(resp.headers.get("Retry-After")))
             raise TooManyRequestException from e
         except requests.exceptions.HTTPError as e:
             print(e)
-            logging.error("Vectra API server is down. Retrying after 10 seconds.")
+            self.logger.error("Vectra API server is down. Retrying after 10 seconds.")
             time.sleep(10)
             raise requests.exceptions.HTTPError
         except requests.exceptions.RequestException as req_exception:
-            logging.error(f"Retrying. An exception occurred: {req_exception}")
+            self.logger.error(f"Retrying. An exception occurred: {req_exception}")
             raise requests.exceptions.RequestException from req_exception
         except Exception as e:
             logging.error(f"An exception occurred: {e}")
@@ -1201,77 +1201,6 @@ class VectraPlatformClientV3_3(VectraPlatformClientV3_2):
             params=_generate_params(kwargs, valid_keys, deprecated_keys),
         )
 
-    def download_vectra_ruleset(self, filename=None):
-        if filename is None:
-            filename = "curated.rules"
-        elif not isinstance(filename, str):
-            filename = "curated.rules"
-            raise TypeError(
-                "Filename must be of type str. File is being named 'curated.rules'."
-            )
-
-        p = Path(filename)
-        p.parent.mkdir(parents=True, exist_ok=True)
-
-        resp = self._request(
-            method="get", url=self.url + "/vectra-match/download-vectra-ruleset"
-        )
-
-        resp = requests.get(url=resp.json()["download_url"])
-
-        with open(str(filename), "wb") as file:
-            for chunk in resp.iter_content(chunk_size=8192):
-                if chunk:
-                    file.write(chunk)
-        return resp
-
-    def upload_match_ruleset(self, **kwargs):
-        """
-        Upload vectra-match rules
-        :param file: name of ruleset desired to be uploaded (required)
-        :param notes: notes about the uploaded file (optional)
-        """
-        file_path = kwargs.get("file_path", False)
-        if not file_path:
-            raise ValueError("A ruleset filename is required.")
-        notes = kwargs.get("notes", "")
-        headers = {"Authorization": self.headers["Authorization"]}
-
-        # Get the upload url
-        resp = self._request(
-            method="post",
-            url=f"{self.url}/vectra-match/rules/upload/",
-            headers=headers,
-            json={"file_name": file_path, "notes": notes},
-        )
-
-        upload_url = resp.json()["urls"][0]
-        upload_id = resp.json()["id"]
-
-        # Upload the file to the provided url
-        payload = open(f"{file_path}", "rb")
-        resp = requests.put(upload_url, data=payload)
-
-        if resp.status_code == 200:
-            # Patch the request
-            resp = self._request(
-                method="patch",
-                url=f"{self.url}/vectra-match/rules/upload/{upload_id}",
-                json={"upload_status": "completed"},
-            )
-
-        if resp.status_code == 200:
-            while True:
-                resp = self._request(
-                    method="get",
-                    url=f"{self.url}/vectra-match/rules/upload/{upload_id}",
-                )
-                if resp.json()["external_task_status"] != "in_progress":
-                    break
-                time.sleep(5)
-
-        return resp
-
     def get_feeds(self, **kwargs):
         """
         Gets list of currently configured threat feeds
@@ -1558,7 +1487,7 @@ class VectraPlatformClientV3_4(VectraPlatformClientV3_3):
         params = _generate_params(args, valid_keys, deprecated_keys)
         return params
 
-    def create_group(self, **kwargs):
+    def create_regex_group(self, **kwargs):
         if not (name := kwargs.get("name")):
             raise ValueError("Missing required parameter: name")
 
@@ -1566,51 +1495,28 @@ class VectraPlatformClientV3_4(VectraPlatformClientV3_3):
         regex = kwargs.get("regex", None)
         type = kwargs.get("type", "")
 
-        if members != [] and regex is not None:
+        if members != []:
             raise ValueError("Members cannot be specified when creating a regex group.")
-        elif members != []:
-            regex = None
-        elif regex is not None:
-            members = []
+        if regex is None:
+            raise ValueError("Must provide a regular expression.")
+        if type not in ["host", "account"]:
+            raise ValueError('Parameter type must have value "account" or "host"')
 
         importance = kwargs.get("importance", "medium")
         description = kwargs.get("description", "")
 
-        if regex is None and type not in [
-            "host",
-            "domain",
-            "ip",
-            "account",
-        ]:
-            raise ValueError(
-                'parameter type must have value "account", "domain", "ip" or "host"'
-            )
-        elif regex is not None and type not in ["host", "account"]:
-            raise ValueError('parameter type must have value "account" or "host"')
         rules = kwargs.get("rules", [])
-        if not isinstance(members, list):
-            raise TypeError("members must be type: list")
         if not isinstance(rules, list):
             raise TypeError("rules must be type: list")
 
-        if regex is None:
-            # Static POST body
-            payload = {
-                "name": name,
-                "description": description,
-                "type": type,
-                "members": members,
-                "importance": importance,
-            }
-        else:
-            # Dynamic POST body
-            payload = {
-                "name": name,
-                "description": description,
-                "type": type,
-                "importance": importance,
-                "regex": regex,
-            }
+        # Dynamic POST body
+        payload = {
+            "name": name,
+            "description": description,
+            "type": type,
+            "importance": importance,
+            "regex": regex,
+        }
 
         return self._request(
             method="post",
@@ -1619,53 +1525,36 @@ class VectraPlatformClientV3_4(VectraPlatformClientV3_3):
             json=payload,
         )
 
-    def update_group(self, group_id=None, **kwargs):
+    def update_regex_group(self, group_id=None, **kwargs):
         group = self.get_group_by_id(group_id=group_id).json()
+        try:
+            id = group["id"]
+        except KeyError:
+            raise KeyError(f"Group with id {str(group_id)} was not found")
+        if group["built_using"] != "regex":
+            raise ValueError(f"Group is with id {str(group_id)} not a regex group")
+        if group["type"] not in ["host", "account"]:
+            raise ValueError('Parameter type must have value "account" or "host"')
 
-        if members := kwargs.get("members", []):
-            if kwargs.get("regex"):
-                raise ValueError(
-                    "Members cannot be specified when updating a regex group."
-                )
-            else:
-                regex = None
-        elif regex := kwargs.get("regex"):
-            pass
-        else:
-            members = []
-            regex = None
+        members = kwargs.get("members", [])
+        regex = kwargs.get("regex", None)
+
+        if members != []:
+            raise ValueError("Members cannot be specified when updating a regex group.")
+        if regex is None:
+            raise ValueError("Must provide a regular expression.")
 
         name = kwargs.get("name", group["name"])
         description = kwargs.get("description", group["description"])
         importance = kwargs.get("importance", group["importance"])
 
-        # Transform existing members into flat list as API returns dicts for host & account groups
-        if kwargs.get("append", False):
-            if group["type"] in ["domain", "ip"]:
-                for member in group["members"]:
-                    members.append(member)
-            else:
-                for member in group["members"]:
-                    members.append(member["id"])
-        # Ensure members are unique
-        members = list(set(members))
-
-        if regex is None:
-            # Static POST body
-            payload = {
-                "name": name,
-                "description": description,
-                "members": members,
-                "importance": importance,
-            }
-        else:
-            # Dynamic POST body
-            payload = {
-                "name": name,
-                "description": description,
-                "importance": importance,
-                "regex": regex,
-            }
+        # Dynamic POST body
+        payload = {
+            "name": name,
+            "description": description,
+            "importance": importance,
+            "regex": regex,
+        }
 
         return self._request(
             method="patch",
@@ -1806,6 +1695,79 @@ class VectraPlatformClientV3_4(VectraPlatformClientV3_3):
             url=f"{self.url}/lockdown",
             params=_generate_params(kwargs, valid_keys, deprecated_keys),
         )
+
+    def download_vectra_ruleset(self, filename=None):
+        if filename is None:
+            filename = "curated.rules"
+        elif not isinstance(filename, str):
+            filename = "curated.rules"
+            raise TypeError(
+                "Filename must be of type str. File is being named 'curated.rules'."
+            )
+
+        p = Path(filename)
+        p.parent.mkdir(parents=True, exist_ok=True)
+
+        resp = self._request(
+            method="get", url=self.url + "/vectra-match/download-vectra-ruleset"
+        )
+
+        resp = requests.get(url=resp.json()["download_url"])
+
+        with open(str(filename), "wb") as file:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    file.write(chunk)
+        return resp
+
+    def upload_match_ruleset(self, **kwargs):
+        """
+        Upload vectra-match rules
+        :param file_path: path of ruleset desired to be uploaded (required)
+        :param notes: notes about the uploaded file (optional)
+        """
+        file_path = kwargs.get("file_path", False)
+        if not file_path:
+            raise ValueError("A ruleset filename is required.")
+        if not Path(file_path).is_file():
+            raise ValueError("A ruleset filename cannot be found.")
+        notes = kwargs.get("notes", "")
+        headers = {"Authorization": self.headers["Authorization"]}
+
+        # Get the upload url
+        resp = self._request(
+            method="post",
+            url=f"{self.url}/vectra-match/rules/upload/",
+            headers=headers,
+            json={"file_name": file_path, "notes": notes},
+        )
+
+        upload_url = resp.json()["urls"][0]
+        upload_id = resp.json()["id"]
+
+        # Upload the file to the provided url
+        payload = open(Path(file_path), "rb")
+        resp = requests.put(upload_url, data=payload)
+
+        if resp.status_code == 200:
+            # Patch the request
+            resp = self._request(
+                method="patch",
+                url=f"{self.url}/vectra-match/rules/upload/{upload_id}",
+                json={"upload_status": "completed"},
+            )
+
+        if resp.status_code == 200:
+            while True:
+                resp = self._request(
+                    method="get",
+                    url=f"{self.url}/vectra-match/rules/upload/{upload_id}",
+                )
+                if resp.json()["external_task_status"] != "in_progress":
+                    break
+                time.sleep(5)
+
+        return resp
 
 
 class ClientV3_latest(VectraPlatformClientV3_4):

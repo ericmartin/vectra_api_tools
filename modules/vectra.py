@@ -3,6 +3,7 @@ import copy
 import html
 import ipaddress
 import json
+import logging
 import os
 import re
 import warnings
@@ -251,6 +252,7 @@ class VectraBaseClient(object):
                 "token for v2, "
                 "or username and password for v1."
             )
+        self.logger = logging.getLogger(f"VectraClient_v{self.version}")
 
     def enable_debug(self):
         self._debug = True
@@ -3444,9 +3446,10 @@ class VectraClientV2_4(VectraClientV2_2):
         return self._request(method="post", url=f"{self.url}/groups", json=payload)
 
     @validate_gte_api_v3_2
-    def update_group(
-        self, group_id, name=None, description="", members=[], append=False, **kwargs
-    ):
+    # def update_group(
+    #     self, group_id, name=None, description="", members=[], append=False, **kwargs
+    # ):
+    def update_group(self, group_id, **kwargs):
         """
         Update group
         :param group_id: id of group to update
@@ -3455,38 +3458,48 @@ class VectraClientV2_4(VectraClientV2_2):
         :param members: list of members to add to group
         :param append: set to True if appending to existing list (boolean)
         """
-        if not isinstance(members, list):
+        if not isinstance(members := kwargs.get("members", []), list):
             raise TypeError("members must be type: list")
 
+        params = {}
         group = self.get_group_by_id(group_id=group_id).json()
         try:
             id = group["id"]
         except KeyError:
             raise KeyError(f"Group with id {str(group_id)} was not found")
 
-        # Transform existing members into flat list as API returns dicts for host & account groups
-        if append:
-            if group["type"] in ["domain", "ip"]:
-                for member in group["members"]:
-                    members.append(member)
-            elif group["type"] == "account":
-                for member in group["members"]:
-                    members.append(member["uid"])
-            else:
-                for member in group["members"]:
-                    members.append(member["id"])
-        # Ensure members are unique
-        members = list(set(members))
+        if kwargs.get("append", False) and kwargs.get("remove", False):
+            raise ValueError("Cannot append and remove members in same call.")
+        elif kwargs.get("append", False):
+            params["membership_action"] = "append"
+        elif kwargs.get("remove", False):
+            params["membership_action"] = "remove"
+        else:
+            params["membership_action"] = "replace"
 
-        name = name if name else group["name"]
-        description = description if description else group["description"]
+        # Transform existing members into flat list as API returns dicts for host & account groups
+        # if append:
+        #     if group["type"] in ["domain", "ip"]:
+        #         for member in group["members"]:
+        #             members.append(member)
+        #     elif group["type"] == "account":
+        #         for member in group["members"]:
+        #             members.append(member["uid"])
+        #     else:
+        #         for member in group["members"]:
+        #             members.append(member["id"])
+        # # Ensure members are unique
+        # members = list(set(members))
+
+        name = kwargs.get("name", group["name"])
+        description = kwargs.get("description", group["description"])
 
         payload = {"name": name, "description": description, "members": members}
 
-        for k, v in kwargs.items():
-            payload[k] = v
+        # for k, v in kwargs.items():
+        #     payload[k] = v
         return self._request(
-            method="patch", url=f"{self.url}/groups/{id}", json=payload
+            method="patch", url=f"{self.url}/groups/{id}", json=payload, params=params
         )
 
     @validate_gte_api_v3_2
